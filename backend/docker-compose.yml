@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: awapart66
+      POSTGRES_USER: awapart
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U awapart -d awapart66"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://awapart:${DB_PASSWORD}@db:5432/awapart66
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  pgdata:
+  uploads:
